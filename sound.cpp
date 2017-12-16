@@ -142,5 +142,5 @@ SoundChNum SoundMixer::playAuto(SoundInfo_t sound, SoundVolume vol) {
 			return i;
 		}
 	}
-	return chCount // No free channels
+	return chCount; // No free channels
 }
