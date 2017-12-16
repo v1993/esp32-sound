@@ -38,9 +38,10 @@ void SoundMixer::decSound() {
 	}
 }
 
-SoundMixer::SoundMixer(SoundChNum channels, dac_channel_t dac, unsigned int frequency) {
-	assert(channels <= CONFIG_SND_MAX_CHANNELS);
-	chCount = channels;
+SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac, unsigned int frequency) {
+	chCount = normal_channels + auto_channels;
+	chFirstAuto = normal_channels; // It isn't mistake, but look strange
+	assert(chCount <= CONFIG_SND_MAX_CHANNELS);
 	dacCh = dac;
 	delay = 1000000 / frequency;
 
@@ -54,7 +55,7 @@ SoundMixer::SoundMixer(SoundChNum channels, dac_channel_t dac, unsigned int freq
 
 	esp_timer_create(&timer_args, &timer);
 
-	for (SoundChNum i = 0; i < channels; i++) { // Set defaults
+	for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
 		chActive[i] = false;
 		chPaused[i] = false;
 		chVolume[i] = 255;
@@ -131,4 +132,15 @@ SoundState SoundMixer::state(SoundChNum channel) {
 	if (chActive[channel]) return PLAYING;
 	if (chPaused[channel]) return PAUSED;
 	return STOPPED;
+}
+
+SoundChNum SoundMixer::playAuto(SoundInfo_t sound, SoundVolume vol) {
+	for (SoundChNum i = chFirstAuto; i < chCount; i++) {
+		if (state(i) == STOPPED) { // We found free channel, setting up
+			chVolume[i] = vol;
+			play(i, sound);
+			return i;
+		}
+	}
+	return chCount // No free channels
 }
