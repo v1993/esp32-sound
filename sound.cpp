@@ -84,6 +84,14 @@ bool SoundMixer::stop(SoundChNum channel) {
 	return false;
 }
 
+bool SoundMixer::stopAll() {
+	bool res = false;
+	for (SoundChNum i = 0; i < chCount; i++) {
+		res |= stop(i);
+	}
+	return res;
+}
+
 bool SoundMixer::pause(SoundChNum channel) {
 	if (chActive[channel]) {
 		chActive[channel] = false;
@@ -93,6 +101,14 @@ bool SoundMixer::pause(SoundChNum channel) {
 	return true;
 }
 
+bool SoundMixer::pauseAll() {
+	bool res = false;
+	for (SoundChNum i = 0; i < chCount; i++) {
+		res |= pause(i);
+	}
+	return res;
+}
+
 bool SoundMixer::resume(SoundChNum channel) {
 	if (chPaused[channel]) {
 		chActive[channel] = true;
@@ -100,6 +116,15 @@ bool SoundMixer::resume(SoundChNum channel) {
 		incSound();
 	}
 	return true;
+}
+
+
+bool SoundMixer::resumeAll() {
+	bool res = false;
+	for (SoundChNum i = 0; i < chCount; i++) {
+		res |= resume(i);
+	}
+	return res;
 }
 
 SoundState SoundMixer::state(SoundChNum channel) {

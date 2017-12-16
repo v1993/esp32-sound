@@ -56,6 +56,10 @@ class SoundMixer {
 		bool pause(SoundChNum channel);
 		bool resume(SoundChNum channel);
 		SoundState_t state(SoundChNum channel);
+
+		bool stopAll();
+		bool pauseAll();
+		bool resumeAll();
 };
 
 #endif
