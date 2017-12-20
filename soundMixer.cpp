@@ -1,19 +1,19 @@
 #include <sound.h>
 
-/*
-static void staticSoundCallback(void *ref) {
-	static_cast<SoundMixer*>(ref)->soundCallback();
-}*/
+#define ENTER_CRITICAL() critical++
+#define LEAVE_CRITICAL() critical--
 
 void SoundMixer::soundCallback() {
+	if (critical > 0) return; // If we are in critical area, skip frame
 	unsigned int out = 0;
 	for (SoundChNum i = 0; i < chCount; i++) {
 		if (chActive[i]) {
-			SoundInfo_t sound = chSound[i];
-			out += sound.data[chPos[i]++] * chVolume[i];
-			if (chPos[i] >= sound.len) {
-				if (sound.repeat) {
-					chPos[i] = 0;
+			SoundProvider *sound = chSound[i];
+			out += sound->buf[sound->buf_pos++] * chVolume[i];
+			if (sound->buf_pos == sound->buf_len) sound->buf_update(); // Grab more data
+			if (sound->buf_len == 0) {
+				if (sound->repeat) {
+					sound->buf_reload();
 				} else {
 					stop(i);
 				}
@@ -22,25 +22,29 @@ void SoundMixer::soundCallback() {
 	}
 	out = out / 255 / chCount;
 	dac_output_voltage(dacCh, min(out, 255)); // Do NOT overload
-	if (rand() % 1000 == 0) Serial.println(out);
+	// if (rand() % 1000 == 0) Serial.println(out); // FIXME: delete it!
 }
 
 void SoundMixer::incSound() {
+	ENTER_CRITICAL();
 	if (chActiveCount == 0) esp_timer_start_periodic(timer, delay); // Logic!
 	chActiveCount++;
+	LEAVE_CRITICAL();
 }
 
 void SoundMixer::decSound() {
+	ENTER_CRITICAL();
 	chActiveCount--;
 	if (chActiveCount == 0) {
 		esp_timer_stop(timer); // More logic.
 		dac_output_voltage(dacCh, 0); // Turn off output
 	}
+	LEAVE_CRITICAL();
 }
 
 SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac, unsigned int frequency) {
 	chCount = normal_channels + auto_channels;
-	chFirstAuto = normal_channels; // It isn't mistake, but look strange
+	chFirstAuto = normal_channels; // It isn't mistake, but looks strange
 	assert(chCount <= CONFIG_SND_MAX_CHANNELS);
 	dacCh = dac;
 	delay = 1000000 / frequency;
@@ -67,19 +71,25 @@ SoundMixer::~SoundMixer() {
 	esp_timer_delete(timer);
 }
 
-void SoundMixer::play(SoundChNum channel, SoundInfo_t sound) {
+void SoundMixer::play(SoundChNum channel, SoundProvider *sound) {
+	ENTER_CRITICAL();
 	stop(channel);
+	sound->buf_init();
 	chSound[channel] = sound;
 	chPos[channel] = 0;
 	chActive[channel] = true;
 	incSound();
+	LEAVE_CRITICAL();
 }
 
 bool SoundMixer::stop(SoundChNum channel) {
 	if (chActive[channel] || chPaused[channel]) {
+		ENTER_CRITICAL();
 		chActive[channel] = false;
 		chPaused[channel] = false;
 		decSound();
+		chSound[channel]->buf_deinit();
+		LEAVE_CRITICAL();
 		return true;
 	}
 	return false;
@@ -95,11 +105,14 @@ bool SoundMixer::stopAll() {
 
 bool SoundMixer::pause(SoundChNum channel) {
 	if (chActive[channel]) {
+		ENTER_CRITICAL();
 		chActive[channel] = false;
 		chPaused[channel] = true;
 		decSound();
+		LEAVE_CRITICAL();
+		return true;
 	}
-	return true;
+	return false;
 }
 
 bool SoundMixer::pauseAll() {
@@ -112,11 +125,14 @@ bool SoundMixer::pauseAll() {
 
 bool SoundMixer::resume(SoundChNum channel) {
 	if (chPaused[channel]) {
+		ENTER_CRITICAL();
 		chActive[channel] = true;
 		chPaused[channel] = false;
 		incSound();
+		LEAVE_CRITICAL();
+		return true;
 	}
-	return true;
+	return false;
 }
 
 
@@ -134,7 +150,7 @@ SoundState SoundMixer::state(SoundChNum channel) {
 	return STOPPED;
 }
 
-SoundChNum SoundMixer::playAuto(SoundInfo_t sound, SoundVolume vol) {
+SoundChNum SoundMixer::playAuto(SoundProvider *sound, SoundVolume vol) {
 	for (SoundChNum i = chFirstAuto; i < chCount; i++) {
 		if (state(i) == STOPPED) { // We found free channel, setting up
 			chVolume[i] = vol;
