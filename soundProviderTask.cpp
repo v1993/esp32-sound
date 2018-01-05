@@ -3,7 +3,7 @@
 SoundProviderTask::SoundProviderTask() {}
 SoundProviderTask::~SoundProviderTask() {}
 
-void SoundProviderPcm::provider_start() {
+void SoundProviderTask::provider_start() {
 	if (taskHandle == NULL) {
 		task_start();
 		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", 512, this, 10, &taskHandle);
