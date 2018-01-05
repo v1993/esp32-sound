@@ -148,7 +148,7 @@ void SoundMixer::incSound() {
 }
 
 void SoundMixer::decSound() {
-	xSemaphoreTake(chActiveCount);
+	xSemaphoreTake(chActiveCount, portMAX_DELAY);
 }
 
 void SoundMixer::addEvent(SoundControl_t event) {

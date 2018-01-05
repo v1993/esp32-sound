@@ -31,34 +31,34 @@ class SoundMixer {
 
 		SoundVolume chVolume[CONFIG_SND_MAX_CHANNELS]; // Volume map
 
-		void incSound() volatile; // Increment counter
-		void decSound() volatile; // Decrement counter
+		void incSound(); // Increment counter
+		void decSound(); // Decrement counter
 
-		void soundCallback() volatile; // Play one step
-		bool handleQueue() volatile; // Handle suspended events (SAFE)
-		void setupTimer() volatile; // Set divisors and start timer
+		void soundCallback(); // Play one step
+		bool handleQueue(); // Handle suspended events (SAFE)
+		void setupTimer(); // Set divisors and start timer
 
-		void addEvent(SoundControl_t event) volatile;
+		void addEvent(SoundControl_t event);
 
-		void checkTimer() volatile; // Start one-shot "promo-"timer if isn't active
+		void checkTimer(); // Start one-shot "promo-"timer if isn't active
 	public:
 
 		SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac); // Setup SoundMixer
 		~SoundMixer(); // Destroy extra stuff
 
-		void play(SoundChNum channel, SoundProvider *sound) volatile;
-		void stop(SoundChNum channel) volatile;
-		void pause(SoundChNum channel) volatile;
-		void resume(SoundChNum channel) volatile;
-		void setVolume(SoundChNum channel, SoundVolume vol) volatile;
-		void getVolume(SoundChNum channel) volatile;
-		SoundState_t state(SoundChNum channel) volatile; // SAFE
+		void play(SoundChNum channel, SoundProvider *sound);
+		void stop(SoundChNum channel);
+		void pause(SoundChNum channel);
+		void resume(SoundChNum channel);
+		void setVolume(SoundChNum channel, SoundVolume vol);
+		void getVolume(SoundChNum channel);
+		SoundState_t state(SoundChNum channel); // SAFE
 
-		SoundChNum playAuto(SoundProvider *sound, SoundVolume vol) volatile; // Auto select channel and play sound on it (if no aviable, count of channels will be returned)
+		SoundChNum playAuto(SoundProvider *sound, SoundVolume vol); // Auto select channel and play sound on it (if no aviable, count of channels will be returned)
 
-		void stopAll() volatile;
-		void pauseAll() volatile;
-		void resumeAll() volatile;
+		void stopAll();
+		void pauseAll();
+		void resumeAll();
 };
 
 #endif
