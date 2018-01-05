@@ -1,17 +1,12 @@
 #ifndef SOUND_PROVIDER_PCM_H
 #define SOUND_PROVIDER_PCM_H
 #include <sound.h>
+#include <soundProviderTask.h>
 
-class SoundProviderPcm: public SoundProvider {
+class SoundProviderPcm: public SoundProviderTask {
 	protected:
-		// PROVIDER CONTROL INTERFACE START
-		void provider_start(); // Start filling (should be ok if started)
-		void provider_stop(); // Stop filling (should be ok if isn't started)
-		// PROVIDER CONTROL INTERFACE END
 		unsigned long int getFrequency();
-
-		void taskCode();
-		TaskHandle_t taskHandle = NULL;
+		void task_code();
 
 		unsigned long int freq = 0;
 		const SoundData *data = NULL;
