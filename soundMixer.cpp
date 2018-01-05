@@ -25,7 +25,7 @@ bool SoundMixer::handleQueue() {
 		if (ctrl.event == START) {
 			sound = ctrl.provider;
 		} else {
-			sound = chSound[channel]
+			sound = chSound[channel];
 		}
 		SoundVolume vol = ctrl.vol;
 		switch(ctrl.event) {
@@ -88,10 +88,10 @@ void SoundMixer::setupTimer() {
 			freqArr[n++] = chSound[i]->getFrequency();
 		}}
 
-		int freqLcm = std::accumulate(freqArr[1], freqArr[activeCount], freqArr[0], lcm);
+		int freqLcm = std::accumulate(&(freqArr[1]), &(freqArr[activeCount]), freqArr[0], lcm);
 		for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
-			SoundProvider sound = *chSound[i];
-			sound.divisor = freqLcm / sound.getFrequency();
+			SoundProvider *sound = chSound[i];
+			sound->divisor = freqLcm / sound->getFrequency();
 		}}
 		esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(freqLcm));
 	}
@@ -114,20 +114,20 @@ void SoundMixer::soundCallback() {
 
 	unsigned int out = 0;
 	for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
-		SoundProvider sound = *chSound[i];
-		if ((counter % sound.divisor) == 0) {
+		SoundProvider *sound = chSound[i];
+		if ((counter % sound->divisor) == 0) {
 			SoundData sample;
-			if (xQueueReceive(sound.queue, &sample, 0) == pdTRUE) {
-				sound.actual = sample;
+			if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
+				sound->actual = sample;
 			} 
 		}
-		out += sound.actual;
+		out += sound->actual;
 		SoundProviderControl_t ctrl;
-		while(xQueueReceive(sound.controlQueue, &ctrl, 0) == pdTRUE) {
+		while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
 			switch(ctrl) {
 				case END:
-					if (sound.repeat) {
-						sound.provider_restart();
+					if (sound->repeat) {
+						sound->provider_restart();
 					} else {
 						stop(i);
 					}
@@ -195,7 +195,7 @@ SoundMixer::~SoundMixer() {
 }
 
 void SoundMixer::checkTimer() {
-	if (xSemaphoreTake(timerMtex, 0) == pdTRUE) { // If timer isn't active
+	if (xSemaphoreTake(timerMutex, 0) == pdTRUE) { // If timer isn't active
 		esp_timer_start_once(timer, 0); // Activate one-shot handler
 	}
 }

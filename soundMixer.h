@@ -51,7 +51,7 @@ class SoundMixer {
 		void pause(SoundChNum channel);
 		void resume(SoundChNum channel);
 		void setVolume(SoundChNum channel, SoundVolume vol);
-		void getVolume(SoundChNum channel);
+		SoundVolume getVolume(SoundChNum channel);
 		SoundState_t state(SoundChNum channel); // SAFE
 
 		SoundChNum playAuto(SoundProvider *sound, SoundVolume vol); // Auto select channel and play sound on it (if no aviable, count of channels will be returned)
