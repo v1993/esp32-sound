@@ -18,10 +18,14 @@ void SoundProviderTask::provider_stop() {
 	}
 }
 
-void SoundProviderTask::taskProviderCode() {
-	task_code();
-	postControl(END);
+void SoundProviderTask::stopFromTask() {
 	TaskHandle_t handle = taskHandle;
 	taskHandle = NULL;
 	vTaskDelete(handle);
+}
+
+void SoundProviderTask::taskProviderCode() {
+	task_code();
+	postControl(END);
+	stopFromTask();
 }

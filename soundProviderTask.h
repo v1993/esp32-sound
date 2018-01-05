@@ -16,6 +16,7 @@ class SoundProviderTask: public SoundProvider {
 		// PROVIDER CONTROL INTERFACE END
 
 		void taskProviderCode();
+		void stopFromTask();
 		TaskHandle_t taskHandle = NULL;
 
 		size_t stackSize = 2048;
