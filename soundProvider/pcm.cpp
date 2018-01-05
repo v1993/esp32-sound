@@ -16,7 +16,7 @@ unsigned long int SoundProviderPcm::getFrequency() {
 
 void SoundProviderPcm::provider_start() {
 	if (taskHandle == NULL) {
-		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderPcm::taskCode), "SoundProviderPcm", 256, this, 10, &taskHandle);
+		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderPcm::taskCode), "SProviderPcm", 512, this, 10, &taskHandle);
 	}
 }
 
