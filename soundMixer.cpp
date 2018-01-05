@@ -118,10 +118,10 @@ void SoundMixer::soundCallback() {
 		if ((counter % sound->divisor) == 0) {
 			SoundData sample;
 			if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
-				sound->actual = sample * chVolume[i];
+				sound->actual = sample;
 			} 
 		}
-		out += sound->actual;
+		out += sound->actual * chVolume[i];
 		SoundProviderControl_t ctrl;
 		while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
 			switch(ctrl) {
