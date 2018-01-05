@@ -14,7 +14,6 @@ class SoundProviderTask: public SoundProvider {
 		void provider_start(); // Start filling (should be ok if started)
 		void provider_stop(); // Stop filling (should be ok if isn't started)
 		// PROVIDER CONTROL INTERFACE END
-		unsigned long int getFrequency();
 
 		void taskProviderCode();
 		TaskHandle_t taskHandle = NULL;
