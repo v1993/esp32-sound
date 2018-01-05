@@ -19,5 +19,6 @@ class SoundProviderPcm: public SoundProvider {
 	public:
 		SoundProviderPcm(SoundData *dataarg, SoundPos lenarg, unsigned long int freqarg);
 		virtual ~SoundProviderPcm();
-}
+};
+
 #endif
