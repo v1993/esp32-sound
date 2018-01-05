@@ -118,7 +118,7 @@ void SoundMixer::soundCallback() {
 		if ((counter % sound->divisor) == 0) {
 			SoundData sample;
 			if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
-				sound->actual = sound->actual * chVolume[i];
+				sound->actual = sample * chVolume[i];
 			} 
 		}
 		out += sound->actual;
