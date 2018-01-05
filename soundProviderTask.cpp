@@ -6,7 +6,7 @@ SoundProviderTask::~SoundProviderTask() {}
 void SoundProviderTask::provider_start() {
 	if (taskHandle == NULL) {
 		task_start();
-		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", 4096, this, 10, &taskHandle);
+		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", stackSize, this, 10, &taskHandle);
 	}
 }
 

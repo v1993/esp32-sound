@@ -17,6 +17,8 @@ class SoundProviderTask: public SoundProvider {
 
 		void taskProviderCode();
 		TaskHandle_t taskHandle = NULL;
+
+		size_t stackSize = 2048;
 	public:
 		SoundProviderTask();
 		virtual ~SoundProviderTask();
