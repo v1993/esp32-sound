@@ -14,10 +14,10 @@ class SoundProviderPcm: public SoundProvider {
 		TaskHandle_t taskHandle = NULL;
 
 		unsigned long int freq = 0;
-		SoundData *data = NULL;
+		const SoundData *data = NULL;
 		SoundPos len = 0;
 	public:
-		SoundProviderPcm(SoundData *dataarg, SoundPos lenarg, unsigned long int freqarg);
+		SoundProviderPcm(const SoundData *dataarg, SoundPos lenarg, unsigned long int freqarg);
 		virtual ~SoundProviderPcm();
 };
 
