@@ -37,9 +37,9 @@ typedef enum SoundEvent {
 } SoundEvent_t;
 
 typedef struct SoundControl {
-	SoundEvent_t event,
-	SoundChNum channel,
-	SoundProvider *provider,
+	SoundEvent_t event;
+	SoundChNum channel;
+	SoundProvider *provider;
 	SoundVolume vol;
 } SoundControl_t;
 
