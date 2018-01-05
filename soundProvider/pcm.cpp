@@ -32,5 +32,7 @@ void SoundProviderPcm::taskCode() {
 		postSample(data[i]);
 	}
 	postControl(END);
-	vTaskDelete(taskHandle);
+	TaskHandle_t handle = taskHandle;
+	taskHandle = NULL;
+	vTaskDelete(handle);
 }
