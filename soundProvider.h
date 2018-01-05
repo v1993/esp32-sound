@@ -2,26 +2,36 @@
 #define SOUND_PROVIDER_H
 class SoundMixer;
 
-class SoundProvider { // Abstract interface for sound providers
+class SoundProvider { // Abstract interface for sound providers. Include queues initialisation/deinitialisation.
 	protected:
-		// BUFFER INTERFACE START
-		SoundData* buf; // Read from here
-		SoundPos buf_len = 0; // Buffer length (0 mean nothing to read), valid only after buf_init
-		SoundPos buf_pos = 0; // Position (in buffer)
+		QueueHandle_t queue = NULL; // Read from here
+		QueueHandle_t controlQueue = NULL; // Read controlling data from here
 
-		virtual void buf_init() = 0; // Init buffer (reset position and fill with first piece)
-		virtual void buf_update() = 0; // Update buffer with next piece of data
-		virtual void buf_deinit() {}; // Free buffer memory (optional)
+		// PROVIDER CONTROL INTERFACE START
+		virtual void provider_start() = 0; // Start filling (should be ok if started)
+		virtual void provider_pause() {}; // Optional methods for extra optimisation
+		virtual void provider_resume() {}; 
+		virtual void provider_stop() = 0; // Stop filling (should be ok if isn't started)
 
-		virtual void buf_reload() {buf_deinit(); buf_init();} // This one calls if track repeats (default implementation should work, but it is better to write your own)
-		// BUFFER INTERFACE END
+		virtual void provider_restart() {provider_stop(); provider_start();} // This one calls if track repeats (default implementation should work, but it is better to write your own)
+		// PROVIDER CONTROL INTERFACE END
 
-		virtual void getFrequency(); // Frequency in Hz, should be constant
+		void postSample(SoundData sample);
+		void postControl(SoundProviderControl ctrl);
+
+		void queueReset();
+
+		virtual unsigned long int getFrequency() = 0; // Frequency in Hz, should be constant
+
+	private:
+		unsigned int divisor = 1; // For different frequencies in same mixer
+		SoundData actual = 0;
+
 	public:
-		SoundProvider() {};
-		virtual ~SoundProvider() {};
+		SoundProvider();
+		virtual ~SoundProvider();
 
-		bool repeat; // Implementation sholdn't carry about it
+		bool repeat = false; // Implementation souldn't use any optimisations based on this
 
 	friend SoundMixer;
 };
