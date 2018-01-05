@@ -17,7 +17,7 @@ class SoundProviderPcm: public SoundProvider {
 		SoundData *data = NULL;
 		SoundPos len = 0;
 	public:
-		SoundProviderPcm(SoundData *dataarg, unsigned long int freqarg, SoundPos lenarg);
+		SoundProviderPcm(SoundData *dataarg, SoundPos lenarg, unsigned long int freqarg);
 		virtual ~SoundProviderPcm();
 }
 #endif

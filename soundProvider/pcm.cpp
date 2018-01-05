@@ -1,6 +1,6 @@
 #include <soundProvider/pcm.h>
 
-SoundProviderPcm::SoundProviderPcm(SoundData *dataarg, unsigned long int freqarg, SoundPos lenarg) {
+SoundProviderPcm::SoundProviderPcm(SoundData *dataarg, SoundPos lenarg, unsigned long int freqarg) {
 	data = dataarg;
 	freq = freqarg;
 	len = lenarg;
