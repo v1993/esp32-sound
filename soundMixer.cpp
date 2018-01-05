@@ -173,7 +173,7 @@ SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac
 
 	mutex = xSemaphoreCreateMutex();
 	timerMutex = xSemaphoreCreateCounting(1, 1);
-	chActiveCount = xSemaphoreCreateCounting(chCount-1, 0);
+	chActiveCount = xSemaphoreCreateCounting(chCount, 0);
 	queue = xQueueCreate(CONFIG_SND_CONTROL_QUEUE_SIZE, sizeof(SoundControl_t));
 
 	for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
