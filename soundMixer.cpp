@@ -74,13 +74,13 @@ bool SoundMixer::handleQueue() {
 
 void SoundMixer::setupTimer() {
 	SoundChNum activeCount = uxSemaphoreGetCount(chActiveCount);
+	counterMax = 1;
 	if (activeCount == 1) { // Only one sound
 		for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
 			chSound[i]->divisor = 1;
 			esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(chSound[i]->getFrequency()));
 			break;
 		}}
-		counterMax = 1;
 	} else {
 		SoundChNum n = 0;
 		unsigned long int freqArr[activeCount];
@@ -92,6 +92,7 @@ void SoundMixer::setupTimer() {
 		for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
 			SoundProvider *sound = chSound[i];
 			sound->divisor = freqLcm / sound->getFrequency();
+			counterMax = lcm(counterMax, sound->divisor);
 		}}
 		esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(freqLcm));
 	}
