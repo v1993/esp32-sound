@@ -12,9 +12,9 @@ void SoundProviderTask::provider_start() {
 
 void SoundProviderTask::provider_stop() {
 	if (taskHandle != NULL) {
-		task_stop();
 		vTaskDelete(taskHandle);
 		taskHandle = NULL;
+		task_stop();
 	}
 }
 
