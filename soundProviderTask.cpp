@@ -22,6 +22,7 @@ void SoundProviderTask::stopFromTask() {
 	TaskHandle_t handle = taskHandle;
 	taskHandle = NULL;
 	vTaskDelete(handle);
+	while(true) {};
 }
 
 void SoundProviderTask::taskProviderCode() {
