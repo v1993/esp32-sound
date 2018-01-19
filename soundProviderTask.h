@@ -5,9 +5,11 @@
 class SoundProviderTask: public SoundProvider {
 	protected:
 		// TASK PROVIDER INTERFACE START
-		virtual void task_start() {};
+		virtual void task_prestart() {};
+		virtual void task_poststart() {};
 		virtual void task_code() = 0;
-		virtual void task_stop() {};
+		virtual void task_prestop() {};
+		virtual void task_poststop() {};
 		// TASK PROVIDER INTERFACE END
 
 		// PROVIDER CONTROL INTERFACE START

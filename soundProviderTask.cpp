@@ -5,16 +5,18 @@ SoundProviderTask::~SoundProviderTask() {}
 
 void SoundProviderTask::provider_start() {
 	if (taskHandle == NULL) {
-		task_start();
+		task_prestart();
 		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", stackSize, this, 10, &taskHandle);
+		task_poststart();
 	}
 }
 
 void SoundProviderTask::provider_stop() {
 	if (taskHandle != NULL) {
+		task_prestop();
 		vTaskDelete(taskHandle);
 		taskHandle = NULL;
-		task_stop();
+		task_poststop();
 	}
 }
 
