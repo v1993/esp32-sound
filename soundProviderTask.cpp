@@ -17,6 +17,7 @@ void SoundProviderTask::provider_stop() {
 		vTaskDelete(taskHandle);
 		taskHandle = NULL;
 		task_poststop();
+		queueReset();
 	}
 }
 
