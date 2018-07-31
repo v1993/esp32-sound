@@ -1,5 +1,5 @@
-#ifndef SOUND_PROVIDER_H
-#define SOUND_PROVIDER_H
+#pragma once
+
 class SoundMixer;
 
 class SoundProvider { // Abstract interface for sound providers. Include queues initialisation/deinitialisation.
@@ -35,5 +35,3 @@ class SoundProvider { // Abstract interface for sound providers. Include queues 
 
 	friend SoundMixer;
 };
-
-#endif

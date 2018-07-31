@@ -3,7 +3,7 @@
 SoundProvider::SoundProvider() {
 	queue = xQueueCreate(CONFIG_SND_PROVIDER_MAIN_QUEUE_SIZE, sizeof(SoundData));
 	assert(queue != NULL);
-	controlQueue = xQueueCreate(CONFIG_SND_PROVIDER_CONTROL_QUEUE_SIZE, sizeof(SoundProviderControl_t));
+	controlQueue = xQueueCreate(CONFIG_SND_PROVIDER_CONTROL_QUEUE_SIZE, sizeof(SoundProviderControl));
 	assert(controlQueue != NULL);
 }
 

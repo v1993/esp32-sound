@@ -1,4 +1,5 @@
 #include <soundProviderTask.h>
+#include <esp_task_wdt.h>
 
 SoundProviderTask::SoundProviderTask() {}
 SoundProviderTask::~SoundProviderTask() {}

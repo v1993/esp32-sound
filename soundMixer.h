@@ -1,5 +1,4 @@
-#ifndef SOUND_MIXER_H
-#define SOUND_MIXER_H
+#pragma once
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -38,7 +37,7 @@ class SoundMixer {
 		bool handleQueue(); // Handle suspended events (SAFE)
 		void setupTimer(); // Set divisors and start timer
 
-		void addEvent(SoundControl_t event);
+		void addEvent(SoundControl event);
 
 		void checkTimer(); // Start one-shot "promo-"timer if isn't active
 	public:
@@ -52,7 +51,7 @@ class SoundMixer {
 		void resume(SoundChNum channel);
 		void setVolume(SoundChNum channel, SoundVolume vol);
 		SoundVolume getVolume(SoundChNum channel);
-		SoundState_t state(SoundChNum channel); // SAFE
+		SoundState state(SoundChNum channel); // SAFE
 
 		SoundChNum playAuto(SoundProvider *sound, SoundVolume vol); // Auto select channel and play sound on it (if no aviable, count of channels will be returned)
 
@@ -60,5 +59,3 @@ class SoundMixer {
 		void pauseAll();
 		void resumeAll();
 };
-
-#endif
