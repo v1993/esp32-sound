@@ -17,7 +17,7 @@ static int lcm(int a, int b) {
 
 bool SoundMixer::handleQueue() {
 	xSemaphoreTake(mutex, portMAX_DELAY);
-	SoundControl_t ctrl;
+	SoundControl ctrl;
 	bool upd = false; // Should we recalculate anything?
 	while(xQueueReceive(queue, &ctrl, 0) == pdTRUE) { // Handle all events without blocking
 		SoundChNum channel = ctrl.channel;
@@ -123,7 +123,7 @@ void SoundMixer::soundCallback() {
 			} 
 		}
 		out += sound->actual * chVolume[i];
-		SoundProviderControl_t ctrl;
+		SoundProviderControl ctrl;
 		while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
 			switch(ctrl) {
 				case END:
@@ -152,7 +152,7 @@ void SoundMixer::decSound() {
 	xSemaphoreTake(chActiveCount, portMAX_DELAY);
 }
 
-void SoundMixer::addEvent(SoundControl_t event) {
+void SoundMixer::addEvent(SoundControl event) {
 	xQueueSendToBack(queue, &event, portMAX_DELAY);
 }
 
@@ -175,7 +175,7 @@ SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac
 	mutex = xSemaphoreCreateMutex();
 	timerMutex = xSemaphoreCreateCounting(1, 1);
 	chActiveCount = xSemaphoreCreateCounting(chCount, 0);
-	queue = xQueueCreate(CONFIG_SND_CONTROL_QUEUE_SIZE, sizeof(SoundControl_t));
+	queue = xQueueCreate(CONFIG_SND_CONTROL_QUEUE_SIZE, sizeof(SoundControl));
 
 	for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
 		chActive[i] = false;
@@ -204,7 +204,7 @@ void SoundMixer::checkTimer() {
 void SoundMixer::play(SoundChNum channel, SoundProvider *sound) {
 	stop(channel);
 
-	SoundControl_t ctrl;
+	SoundControl ctrl;
 	ctrl.event = START;
 	ctrl.channel = channel;
 	ctrl.provider = sound;
@@ -215,7 +215,7 @@ void SoundMixer::play(SoundChNum channel, SoundProvider *sound) {
 
 void SoundMixer::stop(SoundChNum channel) {
 	if (uxSemaphoreGetCount(timerMutex) == 0) {
-		SoundControl_t ctrl;
+		SoundControl ctrl;
 		ctrl.event = STOP;
 		ctrl.channel = channel;
 		addEvent(ctrl);
@@ -230,7 +230,7 @@ void SoundMixer::stopAll() {
 
 void SoundMixer::pause(SoundChNum channel) {
 	if (uxSemaphoreGetCount(timerMutex) == 0) {
-		SoundControl_t ctrl;
+		SoundControl ctrl;
 		ctrl.event = PAUSE;
 		ctrl.channel = channel;
 		addEvent(ctrl);
@@ -244,7 +244,7 @@ void SoundMixer::pauseAll() {
 }
 
 void SoundMixer::resume(SoundChNum channel) {
-	SoundControl_t ctrl;
+	SoundControl ctrl;
 	ctrl.event = RESUME;
 	ctrl.channel = channel;
 	addEvent(ctrl);
@@ -260,7 +260,7 @@ void SoundMixer::resumeAll() {
 }
 
 void SoundMixer::setVolume(SoundChNum channel, SoundVolume vol) {
-	SoundControl_t ctrl;
+	SoundControl ctrl;
 	ctrl.event = VOLSET;
 	ctrl.channel = channel;
 	ctrl.vol = vol;
@@ -275,9 +275,9 @@ SoundVolume SoundMixer::getVolume(SoundChNum channel) {
 	return vol;
 }
 
-SoundState_t SoundMixer::state(SoundChNum channel) {
+SoundState SoundMixer::state(SoundChNum channel) {
 	xSemaphoreTake(mutex, portMAX_DELAY);
-	SoundState_t s;
+	SoundState s;
 	if (chActive[channel]) s = PLAYING;
 	else if (chPaused[channel]) s = PAUSED;
 	else s = STOPPED;

@@ -18,31 +18,31 @@ typedef uint8_t SoundData;
 typedef long unsigned int SoundPos;
 typedef unsigned int SoundVolume;
 
-typedef enum SoundState {
+enum SoundState {
 	STOPPED,
 	PLAYING,
 	PAUSED
-} SoundState_t;
+};
 
-typedef enum SoundProviderControl {
+enum SoundProviderControl {
 	END,
 	FAILURE
-} SoundProviderControl_t;
+};
 
-typedef enum SoundEvent {
+enum SoundEvent {
 	STOP,
 	START,
 	PAUSE,
 	RESUME,
 	VOLSET
-} SoundEvent_t;
+};
 
-typedef struct SoundControl {
-	SoundEvent_t event;
+struct SoundControl {
+	SoundEvent event;
 	SoundChNum channel;
 	SoundProvider *provider;
 	SoundVolume vol;
-} SoundControl_t;
+};
 
 #include <soundMixer.h>
 #include <soundProvider.h>
