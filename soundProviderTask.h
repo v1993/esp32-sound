@@ -1,5 +1,5 @@
-#ifndef SOUND_PROVIDER_TASK_H
-#define SOUND_PROVIDER_TASK_H
+#pragma once
+
 #include <sound.h>
 
 class SoundProviderTask: public SoundProvider {
@@ -26,5 +26,3 @@ class SoundProviderTask: public SoundProvider {
 		SoundProviderTask();
 		virtual ~SoundProviderTask();
 };
-
-#endif

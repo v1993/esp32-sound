@@ -1,5 +1,4 @@
-#ifndef SOUND_MIXER_H
-#define SOUND_MIXER_H
+#pragma once
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -60,5 +59,3 @@ class SoundMixer {
 		void pauseAll();
 		void resumeAll();
 };
-
-#endif

@@ -1,5 +1,5 @@
-#ifndef SOUND_H
-#define SOUND_H
+#pragma once
+
 #include <stdint.h>
 #include <iostream>
 #include <numeric>
@@ -46,4 +46,3 @@ typedef struct SoundControl {
 
 #include <soundMixer.h>
 #include <soundProvider.h>
-#endif
