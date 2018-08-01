@@ -7,14 +7,6 @@ config SND_MAX_CHANNELS
 	help
 		Maximal count of channels to be mixed with SoundMixer.
 
-config SND_CONTROL_QUEUE_SIZE
-	int "Size of mixer's queue"
-	default 128
-	range 32 512
-	help
-		In most cases default value will work fine. Try changing it in case of blocking.
-		Keep it bigger than SND_MAX_CHANNELS.
-
 menu "Provider configuration"
 
 config SND_PROVIDER_MAIN_QUEUE_SIZE
