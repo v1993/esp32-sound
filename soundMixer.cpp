@@ -23,9 +23,9 @@ static int lcm(int a, int b) {
 
 namespace Sound {
 	bool SoundMixer::handleQueue() {
-		xSemaphoreTake(mutex, portMAX_DELAY);
 		SoundControl ctrl;
 		bool upd = false; // Should we recalculate anything?
+		std::lock_guard<std::mutex> lock();
 		std::lock_guard<std::mutex> queueLock(queueMutex);
 		while(not queue.empty()) { // Handle all events without blocking
 			SoundControl ctrl = queue.front();
@@ -80,7 +80,6 @@ namespace Sound {
 					break;
 			}
 		}
-		xSemaphoreGive(mutex);
 		return upd;
 	}
 
@@ -186,7 +185,6 @@ namespace Sound {
 
 		esp_timer_create(&timer_args, &timer);
 
-		mutex = xSemaphoreCreateMutex();
 		timerMutex = xSemaphoreCreateCounting(1, 1);
 		chActiveCount = xSemaphoreCreateCounting(chCount, 0);
 
@@ -202,7 +200,6 @@ namespace Sound {
 		esp_timer_stop(timer);
 		esp_timer_delete(timer);
 
-		vSemaphoreDelete(mutex);
 		vSemaphoreDelete(timerMutex);
 		vSemaphoreDelete(chActiveCount);
 	}
@@ -298,20 +295,16 @@ namespace Sound {
 
 	SoundVolume SoundMixer::getVolume(SoundChNum channel) {
 		SoundVolume vol;
-		xSemaphoreTake(mutex, portMAX_DELAY);
+		std::lock_guard<std::mutex> lock();
 		vol = chVolume[channel];
-		xSemaphoreGive(mutex);
 		return vol;
 	}
 
 	SoundState SoundMixer::state(SoundChNum channel) {
-		xSemaphoreTake(mutex, portMAX_DELAY);
-		SoundState s;
-		if (chActive[channel]) s = PLAYING;
-		else if (chPaused[channel]) s = PAUSED;
-		else s = STOPPED;
-		xSemaphoreGive(mutex);
-		return s;
+		std::lock_guard<std::mutex> lock();
+		if (chActive[channel]) return PLAYING;
+		else if (chPaused[channel]) return PAUSED;
+		else return STOPPED;
 	}
 
 	SoundChNum SoundMixer::playAuto(const std::shared_ptr<SoundProvider>& sound, SoundVolume vol) {

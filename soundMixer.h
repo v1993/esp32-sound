@@ -9,7 +9,7 @@ namespace Sound {
 	class SoundMixer {
 		protected:
 			esp_timer_handle_t timer = nullptr; // Timer for this instance
-			SemaphoreHandle_t mutex = nullptr; // Mutex for this instance
+			std::mutex mutex; // Mutex for this instance
 			SemaphoreHandle_t timerMutex = nullptr; // Mutex for timer control
 
 			std::queue<SoundControl, std::list<SoundControl>> queue; // Queue for this instance, not FreeRTOS due to smart pointers
@@ -25,8 +25,8 @@ namespace Sound {
 			SoundChNum chFirstAuto; // Number of first "auto" channel
 			SemaphoreHandle_t chActiveCount = nullptr; // Count of active channels (to control timer)
 			std::array<std::shared_ptr<SoundProvider>, CONFIG_SND_MAX_CHANNELS> chSound; // Sound provider pointers
-			bool chActive[CONFIG_SND_MAX_CHANNELS]; // Active channels, UNSAFE
-			bool chPaused[CONFIG_SND_MAX_CHANNELS]; // Paused channels, UNSAFE
+			std::array<bool, CONFIG_SND_MAX_CHANNELS> chActive; // Active channels, UNSAFE
+			std::array<bool, CONFIG_SND_MAX_CHANNELS> chPaused; // Paused channels, UNSAFE
 
 			SoundVolume chVolume[CONFIG_SND_MAX_CHANNELS]; // Volume map
 
