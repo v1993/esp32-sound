@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <numeric>
+#include <memory>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +52,7 @@ namespace Sound {
 	struct SoundControl {
 		SoundEvent event;
 		SoundChNum channel;
-		SoundProvider *provider;
+		std::shared_ptr<SoundProvider> provider;
 		SoundVolume vol;
 	};
 }

@@ -26,15 +26,15 @@ namespace Sound {
 		xSemaphoreTake(mutex, portMAX_DELAY);
 		SoundControl ctrl;
 		bool upd = false; // Should we recalculate anything?
-		while(xQueueReceive(queue, &ctrl, 0) == pdTRUE) { // Handle all events without blocking
+		std::lock_guard<std::mutex> queueLock(queueMutex);
+		while(not queue.empty()) { // Handle all events without blocking
+			SoundControl ctrl = queue.front();
+			queue.pop();
 			SoundChNum channel = ctrl.channel;
-			SoundProvider *sound;
 			if (ctrl.event == START) {
-				sound = ctrl.provider;
-			} else {
-				sound = chSound[channel];
+				chSound[channel] = std::move(ctrl.provider);
 			}
-			SoundVolume vol = ctrl.vol;
+			std::shared_ptr<SoundProvider>& sound = chSound[channel];
 			switch(ctrl.event) {
 				case STOP:
 					if (chActive[channel]) {upd = true; decSound();}
@@ -42,12 +42,12 @@ namespace Sound {
 							chActive[channel] = false;
 							chPaused[channel] = false;
 							sound->provider_stop();
+							chSound[channel] = nullptr; // Release pointer
 					}
 					break;
 				case START: // I'm sure that channel is free
 					upd = true;
 					incSound();
-					chSound[channel] = sound;
 					chActive[channel] = true;
 					sound->provider_start();
 					sound->actual = 0;
@@ -71,7 +71,7 @@ namespace Sound {
 					}
 					break;
 				case VOLSET:
-					chVolume[channel] = vol;
+					chVolume[channel] = ctrl.vol;
 					break;
 			}
 		}
@@ -97,7 +97,7 @@ namespace Sound {
 
 			int freqLcm = std::accumulate(&(freqArr[1]), &(freqArr[activeCount]), freqArr[0], lcm);
 			for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
-				SoundProvider *sound = chSound[i];
+				std::shared_ptr<SoundProvider> sound = chSound[i];
 				sound->divisor = freqLcm / sound->getFrequency();
 				counterMax = lcm(counterMax, sound->divisor);
 			}}
@@ -113,7 +113,7 @@ namespace Sound {
 				xSemaphoreGive(timerMutex);
 				return;
 			}
-			setupTimer(); // TODO: implement that function
+			setupTimer();
 			counter = 0; // Only for later ++
 		}
 
@@ -122,7 +122,8 @@ namespace Sound {
 
 		unsigned int out = 0;
 		for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
-			SoundProvider *sound = chSound[i];
+			std::shared_ptr<SoundProvider>& sound = chSound[i];
+			//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
 			if ((counter % sound->divisor) == 0) {
 				SoundData sample;
 				if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
@@ -159,8 +160,9 @@ namespace Sound {
 		xSemaphoreTake(chActiveCount, portMAX_DELAY);
 	}
 
-	void SoundMixer::addEvent(SoundControl event) {
-		xQueueSendToBack(queue, &event, portMAX_DELAY);
+	void SoundMixer::addEvent(const SoundControl& event) {
+		std::lock_guard<std::mutex> queueLock(queueMutex);
+		queue.push(event);
 	}
 
 	SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac) {
@@ -182,7 +184,6 @@ namespace Sound {
 		mutex = xSemaphoreCreateMutex();
 		timerMutex = xSemaphoreCreateCounting(1, 1);
 		chActiveCount = xSemaphoreCreateCounting(chCount, 0);
-		queue = xQueueCreate(CONFIG_SND_CONTROL_QUEUE_SIZE, sizeof(SoundControl));
 
 		for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
 			chActive[i] = false;
@@ -199,7 +200,6 @@ namespace Sound {
 		vSemaphoreDelete(mutex);
 		vSemaphoreDelete(timerMutex);
 		vSemaphoreDelete(chActiveCount);
-		vQueueDelete(queue);
 	}
 
 	void SoundMixer::checkTimer() {
@@ -208,15 +208,20 @@ namespace Sound {
 		}
 	}
 
-	void SoundMixer::play(SoundChNum channel, SoundProvider *sound) {
-		stop(channel);
+	void SoundMixer::play(SoundChNum channel, const std::shared_ptr<SoundProvider>& sound) {
+		{
+			auto copy = sound;
+			stop(channel);
 
-		SoundControl ctrl;
-		ctrl.event = START;
-		ctrl.channel = channel;
-		ctrl.provider = sound;
-		addEvent(ctrl);
-	
+			SoundControl ctrl;
+			ctrl.event = START;
+			ctrl.channel = channel;
+			ctrl.provider = std::move(copy); // Copy
+			std::cout << sound.use_count() << std::endl;
+			addEvent(ctrl);
+		}
+		std::cout << sound.use_count() << std::endl;
+
 		checkTimer();
 	}
 
@@ -291,7 +296,7 @@ namespace Sound {
 		return s;
 	}
 
-	SoundChNum SoundMixer::playAuto(SoundProvider *sound, SoundVolume vol) {
+	SoundChNum SoundMixer::playAuto(const std::shared_ptr<SoundProvider>& sound, SoundVolume vol) {
 		for (SoundChNum i = chFirstAuto; i < chCount; i++) {
 			if (state(i) == STOPPED) { // We found free channel, setting up
 				setVolume(i, vol);
