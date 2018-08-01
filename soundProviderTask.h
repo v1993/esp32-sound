@@ -13,15 +13,18 @@ namespace Sound {
 			// TASK PROVIDER INTERFACE END
 
 			// PROVIDER CONTROL INTERFACE START
-			void provider_start(); // Start filling (should be ok if started)
-			void provider_stop(); // Stop filling (should be ok if isn't started)
+			virtual void provider_start() final; // Start filling (should be ok if started)
+			virtual void provider_stop() final; // Stop filling (should be ok if isn't started)
+			virtual void provider_restart(); // This one calls if track repeats (default implementation MAY NOT work)
 			// PROVIDER CONTROL INTERFACE END
 
 			void taskProviderCode();
 			void stopFromTask();
-			TaskHandle_t taskHandle = NULL;
+			TaskHandle_t taskHandle = nullptr;
 
 			size_t stackSize = 2048;
+		private:
+			void unconditionalStart();
 		public:
 			SoundProviderTask();
 			virtual ~SoundProviderTask();

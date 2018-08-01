@@ -44,6 +44,7 @@ namespace Sound {
 	enum SoundEvent {
 		STOP,
 		START,
+		RESTART,
 		PAUSE,
 		RESUME,
 		VOLSET

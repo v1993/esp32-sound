@@ -4,8 +4,8 @@
 namespace Sound {
 	class SoundProvider { // Abstract interface for sound providers. Include queues initialisation/deinitialisation.
 		protected:
-			QueueHandle_t queue = NULL; // Read from here
-			QueueHandle_t controlQueue = NULL; // Read controlling data from here
+			QueueHandle_t queue = nullptr; // Read from here
+			QueueHandle_t controlQueue = nullptr; // Read controlling data from here
 
 			// PROVIDER CONTROL INTERFACE START
 			virtual void provider_start() = 0; // Start filling (should be ok if started)
@@ -13,7 +13,7 @@ namespace Sound {
 			virtual void provider_resume() {}; 
 			virtual void provider_stop() = 0; // Stop filling (should be ok if isn't started)
 
-			virtual void provider_restart() {provider_stop(); provider_start();} // This one calls if track repeats (default implementation should work, but it is better to write your own)
+			virtual void provider_restart() {provider_stop(); provider_start();}; // This one calls if track repeats (default implementation MAY NOT work)
 			// PROVIDER CONTROL INTERFACE END
 
 			void postSample(SoundData sample);

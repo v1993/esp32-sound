@@ -8,9 +8,9 @@
 namespace Sound {
 	class SoundMixer {
 		protected:
-			esp_timer_handle_t timer = NULL; // Timer for this instance
-			SemaphoreHandle_t mutex = NULL; // Mutex for this instance
-			SemaphoreHandle_t timerMutex = NULL; // Mutex for timer control
+			esp_timer_handle_t timer = nullptr; // Timer for this instance
+			SemaphoreHandle_t mutex = nullptr; // Mutex for this instance
+			SemaphoreHandle_t timerMutex = nullptr; // Mutex for timer control
 
 			std::queue<SoundControl, std::list<SoundControl>> queue; // Queue for this instance, not FreeRTOS due to smart pointers
 			// Refer to https://stackoverflow.com/q/51632219/5697743
@@ -23,7 +23,7 @@ namespace Sound {
 
 			SoundChNum chCount; // Total channels count, <= CONFIG_SND_MAX_CHANNELS
 			SoundChNum chFirstAuto; // Number of first "auto" channel
-			SemaphoreHandle_t chActiveCount = NULL; // Count of active channels (to control timer)
+			SemaphoreHandle_t chActiveCount = nullptr; // Count of active channels (to control timer)
 			std::array<std::shared_ptr<SoundProvider>, CONFIG_SND_MAX_CHANNELS> chSound; // Sound provider pointers
 			bool chActive[CONFIG_SND_MAX_CHANNELS]; // Active channels, UNSAFE
 			bool chPaused[CONFIG_SND_MAX_CHANNELS]; // Paused channels, UNSAFE
@@ -47,6 +47,7 @@ namespace Sound {
 			void play(SoundChNum channel, const std::shared_ptr<SoundProvider>& sound);
 			void stop(SoundChNum channel);
 			void pause(SoundChNum channel);
+			void restart(SoundChNum channel);
 			void resume(SoundChNum channel);
 			void setVolume(SoundChNum channel, SoundVolume vol);
 			SoundVolume getVolume(SoundChNum channel);
@@ -56,6 +57,7 @@ namespace Sound {
 
 			void stopAll();
 			void pauseAll();
+			void restartAll();
 			void resumeAll();
 	};
 }

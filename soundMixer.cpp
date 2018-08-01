@@ -61,6 +61,11 @@ namespace Sound {
 							sound->provider_pause();
 					}
 					break;
+				case RESTART:
+					if (chActive[channel]) {
+							sound->provider_restart();
+					}
+					break;
 				case RESUME:
 					if (chPaused[channel]) {
 							upd = true;
@@ -136,7 +141,7 @@ namespace Sound {
 				switch(ctrl) {
 					case END:
 						if (sound->repeat) {
-							sound->provider_restart();
+							restart(i);
 						} else {
 							stop(i);
 						}
@@ -189,7 +194,7 @@ namespace Sound {
 			chActive[i] = false;
 			chPaused[i] = false;
 			chVolume[i] = 255;
-			chSound[i] = NULL;
+			chSound[i] = nullptr;
 		}
 	}
 
@@ -209,17 +214,15 @@ namespace Sound {
 	}
 
 	void SoundMixer::play(SoundChNum channel, const std::shared_ptr<SoundProvider>& sound) {
-		{
-			auto copy = sound;
-			stop(channel);
+		stop(channel);
 
-			SoundControl ctrl;
-			ctrl.event = START;
-			ctrl.channel = channel;
-			ctrl.provider = std::move(copy); // Copy
-			std::cout << sound.use_count() << std::endl;
-			addEvent(ctrl);
-		}
+		SoundControl ctrl;
+		ctrl.event = START;
+		ctrl.channel = channel;
+		ctrl.provider = sound; // Copy
+		std::cout << sound.use_count() << std::endl;
+		addEvent(ctrl);
+
 		std::cout << sound.use_count() << std::endl;
 
 		checkTimer();
@@ -252,6 +255,21 @@ namespace Sound {
 	void SoundMixer::pauseAll() {
 		for (SoundChNum i = 0; i < chCount; i++) {
 			pause(i);
+		}
+	}
+
+	void SoundMixer::restart(SoundChNum channel) {
+		if (uxSemaphoreGetCount(timerMutex) == 0) {
+			SoundControl ctrl;
+			ctrl.event = RESTART;
+			ctrl.channel = channel;
+			addEvent(ctrl);
+		}
+	}
+
+	void SoundMixer::restartAll() {
+		for (SoundChNum i = 0; i < chCount; i++) {
+			restart(i);
 		}
 	}
 
