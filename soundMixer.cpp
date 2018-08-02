@@ -214,10 +214,7 @@ namespace Sound {
 		ctrl.event = START;
 		ctrl.channel = channel;
 		ctrl.provider = sound; // Copy
-		std::cout << sound.use_count() << std::endl;
 		addEvent(ctrl);
-
-		std::cout << sound.use_count() << std::endl;
 
 		checkTimer();
 	}

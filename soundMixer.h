@@ -36,7 +36,7 @@ namespace Sound {
 			void decSound(); // Decrement counter
 	
 			void soundCallback(); // Play one step
-			bool handleQueue(); // Handle suspended events (SAFE)
+			bool handleQueue(); // Handle suspended events (SEMI-SAFE)
 			void setupTimer(); // Set divisors and start timer
 
 			void addEvent(const SoundControl& event);
