@@ -4,13 +4,14 @@
 #include <queue>
 #include <list>
 #include <mutex>
+#include <atomic>
 
 namespace Sound {
 	class SoundMixer {
 		protected:
 			esp_timer_handle_t timer = nullptr; // Timer for this instance
-			std::mutex mutex; // Mutex for this instance
-			SemaphoreHandle_t timerMutex = nullptr; // Mutex for timer control
+			std::recursive_mutex mutex; // Mutex for this instance
+			std::atomic<bool> timerActive = {false}; // Is timer active?
 
 			std::queue<SoundControl, std::list<SoundControl>> queue; // Queue for this instance, not FreeRTOS due to smart pointers
 			// Refer to https://stackoverflow.com/q/51632219/5697743
@@ -23,7 +24,7 @@ namespace Sound {
 
 			SoundChNum chCount; // Total channels count, <= CONFIG_SND_MAX_CHANNELS
 			SoundChNum chFirstAuto; // Number of first "auto" channel
-			SemaphoreHandle_t chActiveCount = nullptr; // Count of active channels (to control timer)
+			std::atomic<SoundChNum> chActiveCount = {0}; // Count of active channels (to control timer)
 			std::array<std::shared_ptr<SoundProvider>, CONFIG_SND_MAX_CHANNELS> chSound; // Sound provider pointers
 			std::array<bool, CONFIG_SND_MAX_CHANNELS> chActive; // Active channels, UNSAFE
 			std::array<bool, CONFIG_SND_MAX_CHANNELS> chPaused; // Paused channels, UNSAFE

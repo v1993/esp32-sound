@@ -25,7 +25,6 @@ namespace Sound {
 	bool SoundMixer::handleQueue() {
 		SoundControl ctrl;
 		bool upd = false; // Should we recalculate anything?
-		std::lock_guard<std::mutex> lock();
 		std::lock_guard<std::mutex> queueLock(queueMutex);
 		while(not queue.empty()) { // Handle all events without blocking
 			SoundControl ctrl = queue.front();
@@ -84,9 +83,8 @@ namespace Sound {
 	}
 
 	void SoundMixer::setupTimer() {
-		SoundChNum activeCount = uxSemaphoreGetCount(chActiveCount);
 		counterMax = 1;
-		if (activeCount == 1) { // Only one sound
+		if (chActiveCount == 1) { // Only one sound
 			for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
 				chSound[i]->divisor = 1;
 				esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(chSound[i]->getFrequency()));
@@ -94,13 +92,13 @@ namespace Sound {
 			}}
 		} else {
 			SoundChNum n = 0;
-			unsigned long int freqArr[activeCount];
-			for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
+			std::vector<unsigned long int> freqArr(chActiveCount);
+			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
 				freqArr[n++] = chSound[i]->getFrequency();
 			}}
 
-			int freqLcm = std::accumulate(&(freqArr[1]), &(freqArr[activeCount]), freqArr[0], lcm);
-			for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
+			int freqLcm = std::accumulate(&(freqArr[1]), &(freqArr[chActiveCount]), freqArr[0], lcm);
+			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
 				std::shared_ptr<SoundProvider> sound = chSound[i];
 				sound->divisor = freqLcm / sound->getFrequency();
 				counterMax = lcm(counterMax, sound->divisor);
@@ -110,11 +108,12 @@ namespace Sound {
 	}
 
 	void SoundMixer::soundCallback() {
+		std::lock_guard<std::recursive_mutex> lock(mutex);
 		bool upd = handleQueue();
 		if (upd) {
 			esp_timer_stop(timer); // It will work OK anyway
-			if (uxSemaphoreGetCount(chActiveCount) == 0) { // If nothing to play
-				xSemaphoreGive(timerMutex);
+			if (chActiveCount == 0) { // If nothing to play
+				timerActive = false;
 				return;
 			}
 			setupTimer();
@@ -157,11 +156,11 @@ namespace Sound {
 	}
 
 	void SoundMixer::incSound() {
-		xSemaphoreGive(chActiveCount);
+		chActiveCount++;
 	}
 
 	void SoundMixer::decSound() {
-		xSemaphoreTake(chActiveCount, portMAX_DELAY);
+		chActiveCount--;
 	}
 
 	void SoundMixer::addEvent(const SoundControl& event) {
@@ -185,9 +184,6 @@ namespace Sound {
 
 		esp_timer_create(&timer_args, &timer);
 
-		timerMutex = xSemaphoreCreateCounting(1, 1);
-		chActiveCount = xSemaphoreCreateCounting(chCount, 0);
-
 		for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
 			chActive[i] = false;
 			chPaused[i] = false;
@@ -199,13 +195,11 @@ namespace Sound {
 	SoundMixer::~SoundMixer() {
 		esp_timer_stop(timer);
 		esp_timer_delete(timer);
-
-		vSemaphoreDelete(timerMutex);
-		vSemaphoreDelete(chActiveCount);
 	}
 
 	void SoundMixer::checkTimer() {
-		if (xSemaphoreTake(timerMutex, 0) == pdTRUE) { // If timer isn't active
+		if (not timerActive) { // If timer isn't active
+			timerActive = true;
 			esp_timer_start_once(timer, 0); // Activate one-shot handler
 		}
 	}
@@ -226,7 +220,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::stop(SoundChNum channel) {
-		if (uxSemaphoreGetCount(timerMutex) == 0) {
+		if (timerActive) {
 			SoundControl ctrl;
 			ctrl.event = STOP;
 			ctrl.channel = channel;
@@ -241,7 +235,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::pause(SoundChNum channel) {
-		if (uxSemaphoreGetCount(timerMutex) == 0) {
+		if (timerActive) {
 			SoundControl ctrl;
 			ctrl.event = PAUSE;
 			ctrl.channel = channel;
@@ -256,7 +250,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::restart(SoundChNum channel) {
-		if (uxSemaphoreGetCount(timerMutex) == 0) {
+		if (timerActive) {
 			SoundControl ctrl;
 			ctrl.event = RESTART;
 			ctrl.channel = channel;
@@ -295,13 +289,13 @@ namespace Sound {
 
 	SoundVolume SoundMixer::getVolume(SoundChNum channel) {
 		SoundVolume vol;
-		std::lock_guard<std::mutex> lock();
+		std::lock_guard<std::recursive_mutex> lock(mutex);
 		vol = chVolume[channel];
 		return vol;
 	}
 
 	SoundState SoundMixer::state(SoundChNum channel) {
-		std::lock_guard<std::mutex> lock();
+		std::lock_guard<std::recursive_mutex> lock(mutex);
 		if (chActive[channel]) return PLAYING;
 		else if (chPaused[channel]) return PAUSED;
 		else return STOPPED;
