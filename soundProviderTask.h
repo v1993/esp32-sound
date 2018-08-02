@@ -13,9 +13,9 @@ namespace Sound {
 			// TASK PROVIDER INTERFACE END
 
 			// PROVIDER CONTROL INTERFACE START
-			virtual void provider_start() final; // Start filling (should be ok if started)
-			virtual void provider_stop() final; // Stop filling (should be ok if isn't started)
-			virtual void provider_restart(); // This one calls if track repeats (default implementation MAY NOT work)
+			virtual void provider_start() override final; // Start filling (should be ok if started)
+			virtual void provider_stop() override final; // Stop filling (should be ok if isn't started)
+			virtual void provider_restart() override; // This one calls if track repeats (default implementation MAY NOT work)
 			// PROVIDER CONTROL INTERFACE END
 
 			void taskProviderCode();
