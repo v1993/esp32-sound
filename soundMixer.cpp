@@ -85,7 +85,7 @@ namespace Sound {
 	void SoundMixer::setupTimer() {
 		counterMax = 1;
 		if (chActiveCount == 1) { // Only one sound
-			for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
+			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
 				chSound[i]->divisor = 1;
 				esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(chSound[i]->getFrequency()));
 				break;
@@ -120,11 +120,11 @@ namespace Sound {
 			counter = 0; // Only for later ++
 		}
 
-		counter++;
+		++counter;
 		if (counter > counterMax) counter = 1;
 
 		unsigned int out = 0;
-		for (SoundChNum i = 0; i < chCount; i++) { if (chActive[i]) {
+		for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
 			std::shared_ptr<SoundProvider>& sound = chSound[i];
 			//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
 			if ((counter % sound->divisor) == 0) {
@@ -156,11 +156,11 @@ namespace Sound {
 	}
 
 	void SoundMixer::incSound() {
-		chActiveCount++;
+		++chActiveCount;
 	}
 
 	void SoundMixer::decSound() {
-		chActiveCount--;
+		--chActiveCount;
 	}
 
 	void SoundMixer::addEvent(const SoundControl& event) {
@@ -184,7 +184,7 @@ namespace Sound {
 
 		esp_timer_create(&timer_args, &timer);
 
-		for (SoundChNum i = 0; i < chCount; i++) { // Set defaults
+		for (SoundChNum i = 0; i < chCount; ++i) { // Set defaults
 			chActive[i] = false;
 			chPaused[i] = false;
 			chVolume[i] = 255;
@@ -229,7 +229,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::stopAll() {
-		for (SoundChNum i = 0; i < chCount; i++) {
+		for (SoundChNum i = 0; i < chCount; ++i) {
 			stop(i);
 		}
 	}
@@ -244,7 +244,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::pauseAll() {
-		for (SoundChNum i = 0; i < chCount; i++) {
+		for (SoundChNum i = 0; i < chCount; ++i) {
 			pause(i);
 		}
 	}
@@ -259,7 +259,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::restartAll() {
-		for (SoundChNum i = 0; i < chCount; i++) {
+		for (SoundChNum i = 0; i < chCount; ++i) {
 			restart(i);
 		}
 	}
@@ -274,7 +274,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::resumeAll() {
-		for (SoundChNum i = 0; i < chCount; i++) {
+		for (SoundChNum i = 0; i < chCount; ++i) {
 			resume(i);
 		}
 	}
@@ -302,7 +302,7 @@ namespace Sound {
 	}
 
 	SoundChNum SoundMixer::playAuto(const std::shared_ptr<SoundProvider>& sound, SoundVolume vol) {
-		for (SoundChNum i = chFirstAuto; i < chCount; i++) {
+		for (SoundChNum i = chFirstAuto; i < chCount; ++i) {
 			if (state(i) == STOPPED) { // We found free channel, setting up
 				setVolume(i, vol);
 				play(i, sound);
