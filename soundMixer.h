@@ -4,13 +4,14 @@
 #include <queue>
 #include <list>
 #include <mutex>
+#include <shared_mutex>
 #include <atomic>
 
 namespace Sound {
 	class SoundMixer {
 		protected:
 			esp_timer_handle_t timer = nullptr; // Timer for this instance
-			std::recursive_mutex mutex; // Mutex for this instance
+			std::shared_timed_mutex mutex; // Mutex for this instance
 			std::atomic<bool> timerActive = {false}; // Is timer active?
 
 			std::queue<SoundControl, std::list<SoundControl>> queue; // Queue for this instance, not FreeRTOS due to smart pointers

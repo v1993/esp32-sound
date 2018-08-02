@@ -108,17 +108,19 @@ namespace Sound {
 	}
 
 	void SoundMixer::soundCallback() {
-		std::lock_guard<std::recursive_mutex> lock(mutex);
+		std::unique_lock<std::shared_timed_mutex> lock(mutex);
 		bool upd = handleQueue();
 		if (upd) {
 			esp_timer_stop(timer); // It will work OK anyway
 			if (chActiveCount == 0) { // If nothing to play
 				timerActive = false;
+				dac_output_voltage(dacCh, 0); // Reduce energy usage
 				return;
 			}
 			setupTimer();
 			counter = 0; // Only for later ++
 		}
+		lock.unlock(); // We leave critical area
 
 		++counter;
 		if (counter > counterMax) counter = 1;
@@ -198,6 +200,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::checkTimer() {
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (not timerActive) { // If timer isn't active
 			timerActive = true;
 			esp_timer_start_once(timer, 0); // Activate one-shot handler
@@ -220,7 +223,9 @@ namespace Sound {
 	}
 
 	void SoundMixer::stop(SoundChNum channel) {
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (timerActive) {
+			lock.unlock();
 			SoundControl ctrl;
 			ctrl.event = STOP;
 			ctrl.channel = channel;
@@ -235,7 +240,9 @@ namespace Sound {
 	}
 
 	void SoundMixer::pause(SoundChNum channel) {
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (timerActive) {
+			lock.unlock();
 			SoundControl ctrl;
 			ctrl.event = PAUSE;
 			ctrl.channel = channel;
@@ -250,6 +257,7 @@ namespace Sound {
 	}
 
 	void SoundMixer::restart(SoundChNum channel) {
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (timerActive) {
 			SoundControl ctrl;
 			ctrl.event = RESTART;
@@ -269,7 +277,7 @@ namespace Sound {
 		ctrl.event = RESUME;
 		ctrl.channel = channel;
 		addEvent(ctrl);
-	
+
 		checkTimer();
 	}
 
@@ -289,16 +297,16 @@ namespace Sound {
 
 	SoundVolume SoundMixer::getVolume(SoundChNum channel) {
 		SoundVolume vol;
-		std::lock_guard<std::recursive_mutex> lock(mutex);
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		vol = chVolume[channel];
 		return vol;
 	}
 
 	SoundState SoundMixer::state(SoundChNum channel) {
-		std::lock_guard<std::recursive_mutex> lock(mutex);
-		if (chActive[channel]) return PLAYING;
+		std::shared_lock<std::shared_timed_mutex> lock(mutex);
+		if (chActive[channel])      return PLAYING;
 		else if (chPaused[channel]) return PAUSED;
-		else return STOPPED;
+		else                        return STOPPED;
 	}
 
 	SoundChNum SoundMixer::playAuto(const std::shared_ptr<SoundProvider>& sound, SoundVolume vol) {
