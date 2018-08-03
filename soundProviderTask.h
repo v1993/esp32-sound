@@ -20,11 +20,10 @@ namespace Sound {
 
 			void taskProviderCode();
 			void stopFromTask();
+			void unconditionalStart();
 			TaskHandle_t taskHandle = nullptr;
 
 			size_t stackSize = 2048;
-		private:
-			void unconditionalStart();
 		public:
 			SoundProviderTask();
 			virtual ~SoundProviderTask();
