@@ -32,8 +32,8 @@ namespace Sound {
 			task_prestop();
 			vTaskDelete(taskHandle);
 			task_poststop();
-			unconditionalStart();
 		}
+		unconditionalStart();
 	}
 
 	void SoundProviderTask::stopFromTask() {
