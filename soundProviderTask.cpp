@@ -46,7 +46,6 @@ namespace Sound {
 	void SoundProviderTask::taskProviderCode() {
 		task_code();
 		while (uxQueueMessagesWaiting(queue) > 0) vTaskDelay(1);
-		postControl(END);
 		stopFromTask();
 	}
 }
