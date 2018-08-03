@@ -36,6 +36,7 @@ namespace Sound {
 	};
 
 	enum SoundProviderControl {
+		FREQUENCY_UPDATE,
 		END,
 		FAILURE
 	};

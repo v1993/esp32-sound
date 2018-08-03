@@ -126,6 +126,7 @@ namespace Sound {
 		if (counter > counterMax) counter = 1;
 
 		unsigned int out = 0;
+		upd = false;
 		for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
 			std::shared_ptr<SoundProvider>& sound = chSound[i];
 			//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
@@ -139,6 +140,9 @@ namespace Sound {
 			SoundProviderControl ctrl;
 			while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
 				switch(ctrl) {
+					case FREQUENCY_UPDATE:
+						upd = true;
+						break;
 					case END:
 						if (sound->repeat) {
 							restart(i);
@@ -155,6 +159,13 @@ namespace Sound {
 
 		out = out / 255 / chCount;
 		dac_output_voltage(dacCh, min(out, 255)); // Do NOT overload
+
+		if (upd) { // If someone have changed frequency
+			lock.lock();
+			esp_timer_stop(timer);
+			setupTimer();
+			lock.unlock(); // If I'll add some code later
+		}
 	}
 
 	void SoundMixer::incSound() {
@@ -170,9 +181,10 @@ namespace Sound {
 		queue.push(event);
 	}
 
-	SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac) {
-		chCount = normal_channels + auto_channels;
-		chFirstAuto = normal_channels; // It isn't mistake, but looks strange
+	SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac):
+	chCount(normal_channels + auto_channels),
+	chFirstAuto(normal_channels) // It isn't mistake, but looks strange
+	{
 		assert(chCount <= CONFIG_SND_MAX_CHANNELS);
 		dacCh = dac;
 
