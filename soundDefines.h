@@ -4,9 +4,7 @@
 #include <numeric>
 #include <memory>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
@@ -14,9 +12,8 @@ extern "C" {
 #include <esp_timer.h>
 #include <driver/gpio.h>
 #include <driver/dac.h>
-#ifdef __cplusplus
+#include <esp_attr.h>
 }
-#endif
 
 #define USING_NS_SOUND using namespace Sound
 
