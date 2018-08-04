@@ -7,6 +7,13 @@ config SND_MAX_CHANNELS
 	help
 		Maximal count of channels to be mixed with SoundMixer.
 
+config SND_USE_IRAM
+	bool "Move timer functions to IRAM"
+	default true
+	help
+		This generally allow extra optimisation.
+		If you need more space in IRAM, turn it off.
+
 menu "Provider configuration"
 
 config SND_PROVIDER_MAIN_QUEUE_SIZE

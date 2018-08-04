@@ -6,7 +6,13 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-static int IRAM_ATTR gcd(int a, int b) {
+#if CONFIG_SND_USE_IRAM
+#define TIMER_ATTRIBUTE IRAM_ATTR
+#else
+#define TIMER_ATTRIBUTE
+#end
+
+static int TIMER_ATTRIBUTE gcd(int a, int b) {
 	while(true) {
 		if (a == 0) return b;
 		b %= a;
@@ -15,14 +21,14 @@ static int IRAM_ATTR gcd(int a, int b) {
 	}
 }
 
-static int IRAM_ATTR lcm(int a, int b) {
+static int TIMER_ATTRIBUTE lcm(int a, int b) {
 	int temp = gcd(a, b);
 
 	return temp ? (a / temp * b) : 0;
 }
 
 namespace Sound {
-	bool IRAM_ATTR SoundMixer::handleQueue() {
+	bool TIMER_ATTRIBUTE SoundMixer::handleQueue() {
 		SoundControl ctrl;
 		bool upd = false; // Should we recalculate anything?
 		std::lock_guard<std::mutex> queueLock(queueMutex);
@@ -82,7 +88,7 @@ namespace Sound {
 		return upd;
 	}
 
-	void IRAM_ATTR SoundMixer::setupTimer() {
+	void TIMER_ATTRIBUTE SoundMixer::setupTimer() {
 		counterMax = 1;
 		if (chActiveCount == 1) { // Only one sound
 			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
@@ -107,7 +113,7 @@ namespace Sound {
 		}
 	}
 
-	void IRAM_ATTR SoundMixer::soundCallback() {
+	void TIMER_ATTRIBUTE SoundMixer::soundCallback() {
 		std::unique_lock<std::shared_timed_mutex> lock(mutex);
 		bool upd = handleQueue();
 		if (upd) {
@@ -168,15 +174,15 @@ namespace Sound {
 		}
 	}
 
-	void IRAM_ATTR SoundMixer::incSound() {
+	void TIMER_ATTRIBUTE SoundMixer::incSound() {
 		++chActiveCount;
 	}
 
-	void IRAM_ATTR SoundMixer::decSound() {
+	void TIMER_ATTRIBUTE SoundMixer::decSound() {
 		--chActiveCount;
 	}
 
-	void IRAM_ATTR SoundMixer::addEvent(const SoundControl& event) {
+	void TIMER_ATTRIBUTE SoundMixer::addEvent(const SoundControl& event) {
 		std::lock_guard<std::mutex> queueLock(queueMutex);
 		queue.push(event);
 	}
@@ -231,7 +237,7 @@ namespace Sound {
 		checkTimer();
 	}
 
-	void SoundMixer::stop(SoundChNum channel) {
+	void TIMER_ATTRIBUTE SoundMixer::stop(SoundChNum channel) {
 		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (timerActive) {
 			lock.unlock();
@@ -265,7 +271,7 @@ namespace Sound {
 		}
 	}
 
-	void SoundMixer::restart(SoundChNum channel) {
+	void TIMER_ATTRIBUTE SoundMixer::restart(SoundChNum channel) {
 		std::shared_lock<std::shared_timed_mutex> lock(mutex);
 		if (timerActive) {
 			SoundControl ctrl;
