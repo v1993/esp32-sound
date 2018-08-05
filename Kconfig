@@ -1,7 +1,7 @@
 menu "Sound module configuration"
 
 config SND_MAX_CHANNELS
-	int "Maximun count of mixed channels"
+	int "Maximal count of mixed channels"
 	default 64
 	range 1 255
 	help
