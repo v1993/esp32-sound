@@ -9,7 +9,7 @@ config SND_MAX_CHANNELS
 
 config SND_USE_IRAM
 	bool "Move timer functions to IRAM"
-	default true
+	default y
 	help
 		This generally allow extra optimisation.
 		If you need more space in IRAM, turn it off.
