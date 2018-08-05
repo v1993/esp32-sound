@@ -1,10 +1,9 @@
 #include "soundMixer.h"
 #include "soundProvider.h"
 
+#include <algorithm>
+
 #define SOUND_FREQ_TO_DELAY(f) (1000000/f)
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
 
 #if CONFIG_SND_USE_IRAM
 #define TIMER_ATTRIBUTE IRAM_ATTR
@@ -164,7 +163,7 @@ namespace Sound {
 		}}
 
 		out = out / 255 / chCount;
-		dac_output_voltage(dacCh, min(out, 255)); // Do NOT overload
+		dac_output_voltage(dacCh, std::min(out, 255U)); // Do NOT overload
 
 		if (upd) { // If someone have changed frequency
 			lock.lock();
