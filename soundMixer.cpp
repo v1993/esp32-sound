@@ -10,7 +10,7 @@
 #define TIMER_ATTRIBUTE IRAM_ATTR
 #else
 #define TIMER_ATTRIBUTE
-#end
+#endif
 
 static int TIMER_ATTRIBUTE gcd(int a, int b) {
 	while(true) {
