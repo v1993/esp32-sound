@@ -21,6 +21,7 @@ namespace Sound {
 			void taskProviderCode();
 			void stopFromTask();
 			void unconditionalStart();
+			void waitQueueEmpty() { while (uxQueueMessagesWaiting(queue) > 0) vTaskDelay(1); }; // Idiomatic
 			TaskHandle_t taskHandle = nullptr;
 
 			size_t stackSize = 2048;
