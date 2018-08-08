@@ -9,3 +9,5 @@ I'll try to write migration guide from 0.2 to 1.0 when it will be released.
 Hey dude! Help me out for a couple of :beers:!
 
 [![Beerpay](https://beerpay.io/v1993/esp32-sound/badge.svg?style=beer-square)](https://beerpay.io/v1993/esp32-sound)  [![Beerpay](https://beerpay.io/v1993/esp32-sound/make-wish.svg?style=flat-square)](https://beerpay.io/v1993/esp32-sound?focus=wish)
+
+Have no idea about whishes? Check out [this list](https://github.com/v1993/esp32-sound/projects/2)!
