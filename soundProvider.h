@@ -9,12 +9,20 @@ namespace Sound {
 
 			// PROVIDER CONTROL INTERFACE START
 			virtual void provider_start() = 0; // Start filling (should be ok if started)
-			virtual void provider_pause() {}; // Optional methods for extra optimisation
-			virtual void provider_resume() {}; 
+			virtual void provider_pause() {
+			}
+			; // Optional methods for extra optimisation
+			virtual void provider_resume() {
+			}
+			;
 			virtual void provider_stop() = 0; // Stop filling (should be ok if isn't started)
 
-			virtual void provider_restart() {provider_stop(); provider_start();}; // This one calls if track repeats (default implementation MAY NOT work)
-			// PROVIDER CONTROL INTERFACE END
+			virtual void provider_restart() {
+				provider_stop();
+				provider_start();
+			}
+			; // This one calls if track repeats (default implementation MAY NOT work)
+			  // PROVIDER CONTROL INTERFACE END
 
 			void postSample(SoundData sample);
 			void postControl(SoundProviderControl ctrl);
@@ -33,6 +41,6 @@ namespace Sound {
 
 			bool repeat = false; // Implementation souldn't use any optimisations based on this
 
-		friend SoundMixer;
+			friend SoundMixer;
 	};
 }

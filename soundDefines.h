@@ -48,10 +48,10 @@ namespace Sound {
 	};
 
 	struct SoundControl {
-		SoundEvent event;
-		SoundChNum channel;
-		std::shared_ptr<SoundProvider> provider;
-		SoundVolume vol;
+			SoundEvent event;
+			SoundChNum channel;
+			std::shared_ptr<SoundProvider> provider;
+			SoundVolume vol;
 	};
 }
 

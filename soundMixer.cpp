@@ -11,42 +11,53 @@
 #define TIMER_ATTRIBUTE
 #endif
 
-static int TIMER_ATTRIBUTE gcd(int a, int b) {
-	while(true) {
-		if (a == 0) return b;
-		b %= a;
-		if (b == 0) return a;
-		a %= b;
+#define forceinline inline __attribute__((always_inline))
+
+extern "C" {
+	static int TIMER_ATTRIBUTE gcd(int a, int b) {
+		while(true) {
+			if (a == 0) return b;
+			b %= a;
+			if (b == 0) return a;
+			a %= b;
+		}
+	}
+
+	static int TIMER_ATTRIBUTE lcm(int a, int b) {
+		int temp = gcd(a, b);
+
+		return temp ? (a / temp * b) : 0;
+	}
+
+	void TIMER_ATTRIBUTE sound_timer_callback_function(void* arg) {
+		static_cast<Sound::SoundMixer*>(arg)->soundCallback();
 	}
 }
 
-static int TIMER_ATTRIBUTE lcm(int a, int b) {
-	int temp = gcd(a, b);
-
-	return temp ? (a / temp * b) : 0;
-}
-
 namespace Sound {
-	bool TIMER_ATTRIBUTE SoundMixer::handleQueue() {
+	bool TIMER_ATTRIBUTE forceinline SoundMixer::handleQueue() {
 		SoundControl ctrl;
 		bool upd = false; // Should we recalculate anything?
 		std::lock_guard<std::mutex> queueLock(queueMutex);
 		while(not queue.empty()) { // Handle all events without blocking
-			SoundControl ctrl = queue.front();
+			SoundControl ctrl = std::move(queue.front());
 			queue.pop();
-			SoundChNum channel = ctrl.channel;
+			SoundChNum& channel = ctrl.channel;
 			if (ctrl.event == START) {
 				chSound[channel] = std::move(ctrl.provider);
 			}
 			std::shared_ptr<SoundProvider>& sound = chSound[channel];
 			switch(ctrl.event) {
 				case STOP:
-					if (chActive[channel]) {upd = true; decSound();}
+					if (chActive[channel]) {
+						upd = true;
+						decSound();
+					}
 					if (chActive[channel] || chPaused[channel]) {
-							chActive[channel] = false;
-							chPaused[channel] = false;
-							sound->provider_stop();
-							chSound[channel] = nullptr; // Release pointer
+						chActive[channel] = false;
+						chPaused[channel] = false;
+						sound->provider_stop();
+						chSound[channel] = nullptr; // Release pointer
 					}
 					break;
 				case START: // I'm sure that channel is free
@@ -58,25 +69,25 @@ namespace Sound {
 					break;
 				case PAUSE:
 					if (chActive[channel]) {
-							upd = true;
-							decSound();
-							chActive[channel] = false;
-							chPaused[channel] = true;
-							sound->provider_pause();
+						upd = true;
+						decSound();
+						chActive[channel] = false;
+						chPaused[channel] = true;
+						sound->provider_pause();
 					}
 					break;
 				case RESTART:
 					if (chActive[channel]) {
-							sound->provider_restart();
+						sound->provider_restart();
 					}
 					break;
 				case RESUME:
 					if (chPaused[channel]) {
-							upd = true;
-							incSound();
-							chActive[channel] = true;
-							chPaused[channel] = false;
-							sound->provider_resume();
+						upd = true;
+						incSound();
+						chActive[channel] = true;
+						chPaused[channel] = false;
+						sound->provider_resume();
 					}
 					break;
 				case VOLSET:
@@ -90,29 +101,35 @@ namespace Sound {
 	void TIMER_ATTRIBUTE SoundMixer::setupTimer() {
 		counterMax = 1;
 		if (chActiveCount == 1) { // Only one sound
-			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
-				chSound[i]->divisor = 1;
-				esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(chSound[i]->getFrequency()));
-				break;
-			}}
+			for (SoundChNum i = 0; i < chCount; ++i) {
+				if (chActive[i]) {
+					chSound[i]->divisor = 1;
+					esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(chSound[i]->getFrequency()));
+					break;
+				}
+			}
 		} else {
 			SoundChNum n = 0;
 			std::vector<unsigned long int> freqArr(chActiveCount);
-			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
-				freqArr[n++] = chSound[i]->getFrequency();
-			}}
+			for (SoundChNum i = 0; i < chCount; ++i) {
+				if (chActive[i]) {
+					freqArr[n++] = chSound[i]->getFrequency();
+				}
+			}
 
 			int freqLcm = std::accumulate(&(freqArr[1]), &(freqArr[chActiveCount]), freqArr[0], lcm);
-			for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
-				std::shared_ptr<SoundProvider> sound = chSound[i];
-				sound->divisor = freqLcm / sound->getFrequency();
-				counterMax = lcm(counterMax, sound->divisor);
-			}}
+			for (SoundChNum i = 0; i < chCount; ++i) {
+				if (chActive[i]) {
+					std::shared_ptr<SoundProvider> sound = chSound[i];
+					sound->divisor = freqLcm / sound->getFrequency();
+					counterMax = lcm(counterMax, sound->divisor);
+				}
+			}
 			esp_timer_start_periodic(timer, SOUND_FREQ_TO_DELAY(freqLcm));
 		}
 	}
 
-	void TIMER_ATTRIBUTE SoundMixer::soundCallback() {
+	void TIMER_ATTRIBUTE forceinline SoundMixer::soundCallback() {
 		std::unique_lock<std::shared_timed_mutex> lock(mutex);
 		bool upd = handleQueue();
 		if (upd) {
@@ -132,35 +149,37 @@ namespace Sound {
 
 		unsigned int out = 0;
 		upd = false;
-		for (SoundChNum i = 0; i < chCount; ++i) { if (chActive[i]) {
-			std::shared_ptr<SoundProvider>& sound = chSound[i];
-			//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
-			if ((counter % sound->divisor) == 0) {
-				SoundData sample;
-				if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
-					sound->actual = sample;
-				} 
-			}
-			out += sound->actual * chVolume[i];
-			SoundProviderControl ctrl;
-			while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
-				switch(ctrl) {
-					case FREQUENCY_UPDATE:
-						upd = true;
-						break;
-					case END:
-						if (sound->repeat) {
-							restart(i);
-						} else {
+		for (SoundChNum i = 0; i < chCount; ++i) {
+			if (chActive[i]) {
+				std::shared_ptr<SoundProvider>& sound = chSound[i];
+				//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
+				if ((counter % sound->divisor) == 0) {
+					SoundData sample;
+					if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
+						sound->actual = sample;
+					}
+				}
+				out += sound->actual * chVolume[i];
+				SoundProviderControl ctrl;
+				while(xQueueReceive(sound->controlQueue, &ctrl, 0) == pdTRUE) {
+					switch(ctrl) {
+						case FREQUENCY_UPDATE:
+							upd = true;
+							break;
+						case END:
+							if (sound->repeat) {
+								restart(i);
+							} else {
+								stop(i);
+							}
+							break;
+						case FAILURE:
 							stop(i);
-						}
-						break;
-					case FAILURE:
-						stop(i);
-						break;
+							break;
+					}
 				}
 			}
-		}}
+		}
 
 		out = out / 255 / chCount;
 		dac_output_voltage(dacCh, std::min(out, 255U)); // Do NOT overload
@@ -173,11 +192,11 @@ namespace Sound {
 		}
 	}
 
-	void TIMER_ATTRIBUTE SoundMixer::incSound() {
+	void TIMER_ATTRIBUTE forceinline SoundMixer::incSound() {
 		++chActiveCount;
 	}
 
-	void TIMER_ATTRIBUTE SoundMixer::decSound() {
+	void TIMER_ATTRIBUTE forceinline SoundMixer::decSound() {
 		--chActiveCount;
 	}
 
@@ -186,9 +205,8 @@ namespace Sound {
 		queue.push(event);
 	}
 
-	SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac):
-	chCount(normal_channels + auto_channels),
-	chFirstAuto(normal_channels) // It isn't mistake, but looks strange
+	SoundMixer::SoundMixer(SoundChNum normal_channels, SoundChNum auto_channels, dac_channel_t dac) :
+		chCount(normal_channels + auto_channels), chFirstAuto(normal_channels) // It isn't mistake, but looks strange
 	{
 		assert(chCount <= CONFIG_SND_MAX_CHANNELS);
 		dacCh = dac;
@@ -196,7 +214,7 @@ namespace Sound {
 		dac_output_enable(dacCh);
 		esp_timer_create_args_t timer_args;
 
-		timer_args.callback = reinterpret_cast<esp_timer_cb_t>(&SoundMixer::soundCallback);
+		timer_args.callback = sound_timer_callback_function;
 		timer_args.arg = this;
 		timer_args.dispatch_method = ESP_TIMER_TASK;
 		timer_args.name = "Sound timer";
@@ -318,9 +336,9 @@ namespace Sound {
 
 	SoundState SoundMixer::state(SoundChNum channel) {
 		std::shared_lock<std::shared_timed_mutex> lock(mutex);
-		if (chActive[channel])      return PLAYING;
+		if (chActive[channel]) return PLAYING;
 		else if (chPaused[channel]) return PAUSED;
-		else                        return STOPPED;
+		else return STOPPED;
 	}
 
 	SoundChNum SoundMixer::playAuto(const std::shared_ptr<SoundProvider>& sound, SoundVolume vol) {

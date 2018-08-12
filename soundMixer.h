@@ -7,6 +7,8 @@
 #include <shared_mutex>
 #include <atomic>
 
+extern "C" void sound_timer_callback_function(void* arg);
+
 namespace Sound {
 	class SoundMixer {
 		protected:
@@ -16,6 +18,7 @@ namespace Sound {
 
 			std::queue<SoundControl, std::list<SoundControl>> queue; // Queue for this instance, not FreeRTOS due to smart pointers
 			// Refer to https://stackoverflow.com/q/51632219/5697743
+
 			std::mutex queueMutex; // Mutex for queue
 
 			dac_channel_t dacCh; // DAC channel for sound
@@ -34,7 +37,7 @@ namespace Sound {
 
 			void incSound(); // Increment counter
 			void decSound(); // Decrement counter
-	
+
 			void soundCallback(); // Play one step
 			bool handleQueue(); // Handle suspended events (SEMI-SAFE)
 			void setupTimer(); // Set divisors and start timer
@@ -61,5 +64,7 @@ namespace Sound {
 			void pauseAll();
 			void restartAll();
 			void resumeAll();
+
+			friend void ::sound_timer_callback_function(void* arg);
 	};
 }

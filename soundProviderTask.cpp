@@ -1,12 +1,17 @@
 #include <soundProviderTask.h>
-#include <esp_task_wdt.h>
+
+extern "C" void sound_provider_start(void* arg) {
+	static_cast<Sound::SoundProviderTask*>(arg)->taskProviderCode();
+}
 
 namespace Sound {
-	SoundProviderTask::SoundProviderTask() {}
-	SoundProviderTask::~SoundProviderTask() {}
+	SoundProviderTask::SoundProviderTask() {
+	}
+	SoundProviderTask::~SoundProviderTask() {
+	}
 
 	void SoundProviderTask::unconditionalStart() {
-		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", stackSize, this, 10, &taskHandle);
+		xTaskCreate(sound_provider_start, "SProvTask", stackSize, this, 10, &taskHandle);
 	}
 
 	void SoundProviderTask::provider_start() {
@@ -40,7 +45,8 @@ namespace Sound {
 		TaskHandle_t handle = taskHandle;
 		taskHandle = nullptr;
 		vTaskDelete(handle);
-		while(true) {};
+		while(true) {
+		};
 	}
 
 	void SoundProviderTask::taskProviderCode() {

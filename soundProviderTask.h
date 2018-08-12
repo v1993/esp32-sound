@@ -1,15 +1,25 @@
 #pragma once
 #include <sound.h>
 
+extern "C" void sound_provider_start(void* arg);
+
 namespace Sound {
 	class SoundProviderTask: public SoundProvider {
 		protected:
 			// TASK PROVIDER INTERFACE START
-			virtual void task_prestart() {};
-			virtual void task_poststart() {};
+			virtual void task_prestart() {
+			}
+			;
+			virtual void task_poststart() {
+			}
+			;
 			virtual void task_code() = 0;
-			virtual void task_prestop() {};
-			virtual void task_poststop() {};
+			virtual void task_prestop() {
+			}
+			;
+			virtual void task_poststop() {
+			}
+			;
 			// TASK PROVIDER INTERFACE END
 
 			// PROVIDER CONTROL INTERFACE START
@@ -21,12 +31,19 @@ namespace Sound {
 			void taskProviderCode();
 			void stopFromTask();
 			void unconditionalStart();
-			void waitQueueEmpty() { while (uxQueueMessagesWaiting(queue) > 0) vTaskDelay(1); }; // Idiomatic
+			void waitQueueEmpty() {
+				while(uxQueueMessagesWaiting(queue) > 0)
+					vTaskDelay(1);
+			}
+			; // Idiomatic
 			TaskHandle_t taskHandle = nullptr;
 
 			size_t stackSize = 2048;
+
 		public:
 			SoundProviderTask();
 			virtual ~SoundProviderTask();
+
+			friend void ::sound_provider_start(void* arg);
 	};
 }
