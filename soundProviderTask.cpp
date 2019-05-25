@@ -1,36 +1,56 @@
 #include <soundProviderTask.h>
-#include <esp_task_wdt.h>
 
-SoundProviderTask::SoundProviderTask() {}
-SoundProviderTask::~SoundProviderTask() {}
+extern "C" void sound_provider_start(void* arg) {
+	static_cast<Sound::SoundProviderTask*>(arg)->taskProviderCode();
+}
 
-void SoundProviderTask::provider_start() {
-	if (taskHandle == NULL) {
-		task_prestart();
-		xTaskCreate(reinterpret_cast<TaskFunction_t>(&SoundProviderTask::taskProviderCode), "SProvTask", stackSize, this, 10, &taskHandle);
-		task_poststart();
+namespace Sound {
+	SoundProviderTask::SoundProviderTask() {
 	}
-}
-
-void SoundProviderTask::provider_stop() {
-	if (taskHandle != NULL) {
-		task_prestop();
-		vTaskDelete(taskHandle);
-		taskHandle = NULL;
-		task_poststop();
-		queueReset();
+	SoundProviderTask::~SoundProviderTask() {
 	}
-}
 
-void SoundProviderTask::stopFromTask() {
-	TaskHandle_t handle = taskHandle;
-	taskHandle = NULL;
-	vTaskDelete(handle);
-	while(true) {};
-}
+	void SoundProviderTask::unconditionalStart() {
+		xTaskCreate(sound_provider_start, "SProvTask", stackSize, this, 10, &taskHandle);
+	}
 
-void SoundProviderTask::taskProviderCode() {
-	task_code();
-	postControl(END);
-	stopFromTask();
+	void SoundProviderTask::provider_start() {
+		if (taskHandle == nullptr) {
+			task_prestart();
+			unconditionalStart();
+			task_poststart();
+		}
+	}
+
+	void SoundProviderTask::provider_stop() {
+		if (taskHandle != nullptr) {
+			task_prestop();
+			vTaskDelete(taskHandle);
+			taskHandle = nullptr;
+			task_poststop();
+			queueReset();
+		}
+	}
+
+	void SoundProviderTask::provider_restart() {
+		if (taskHandle != nullptr) {
+			task_prestop();
+			vTaskDelete(taskHandle);
+			task_poststop();
+		}
+		unconditionalStart();
+	}
+
+	void SoundProviderTask::stopFromTask() {
+		TaskHandle_t handle = taskHandle;
+		taskHandle = nullptr;
+		vTaskDelete(handle);
+		while(true) {
+		};
+	}
+
+	void SoundProviderTask::taskProviderCode() {
+		task_code();
+		stopFromTask();
+	}
 }

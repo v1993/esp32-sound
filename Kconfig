@@ -1,19 +1,18 @@
 menu "Sound module configuration"
 
 config SND_MAX_CHANNELS
-	int "Maximun count of mixed channels"
+	int "Maximal count of mixed channels"
 	default 64
 	range 1 255
 	help
 		Maximal count of channels to be mixed with SoundMixer.
 
-config SND_CONTROL_QUEUE_SIZE
-	int "Size of mixer's queue"
-	default 128
-	range 32 512
+config SND_USE_IRAM
+	bool "Move timer functions to IRAM"
+	default y
 	help
-		In most cases default value will work fine. Try changing it in case of blocking.
-		Keep it bigger than SND_MAX_CHANNELS.
+		This generally allow extra optimisation.
+		If you need more space in IRAM, turn it off.
 
 menu "Provider configuration"
 

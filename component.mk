@@ -1,2 +1,7 @@
 COMPONENT_SRCDIRS:=.
 COMPONENT_ADD_INCLUDEDIRS:=.
+CXXFLAGS += -std=c++14
+
+ifeq ($(CONFIG_OPTIMIZATION_LEVEL_DEBUG),y)
+	CFLAGS += -fno-inline-functions
+endif
