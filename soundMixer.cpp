@@ -11,7 +11,12 @@
 #define TIMER_ATTRIBUTE
 #endif
 
+#ifdef CONFIG_OPTIMIZATION_LEVEL_RELEASE
 #define forceinline inline __attribute__((always_inline))
+#else
+#define forceinline // Turn off on debug builds to prevent debugger crash.
+// Refer to https://github.com/espressif/esp-idf/issues/2343
+#endif
 
 extern "C" {
 	static int TIMER_ATTRIBUTE gcd(int a, int b) {
@@ -152,7 +157,6 @@ namespace Sound {
 		for (SoundChNum i = 0; i < chCount; ++i) {
 			if (chActive[i]) {
 				std::shared_ptr<SoundProvider>& sound = chSound[i];
-				//if ((rand() % 1000) == 0) std::cout << sound.use_count() << std::endl;
 				if ((counter % sound->divisor) == 0) {
 					SoundData sample;
 					if (xQueueReceive(sound->queue, &sample, 0) == pdTRUE) {
